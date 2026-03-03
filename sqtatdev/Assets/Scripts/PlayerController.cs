@@ -3,15 +3,19 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using TMPro;
-using Unity.VisualScripting;
+
 public class PlayerController : MonoBehaviour
 {
-    public float Speed;
+    public float Speed = 10f;
+    public float JumpForce = 5f;
+
     public TMP_Text ScoreText;
     public TMP_Text WinText;
     public GameObject Gate;
+
     private Rigidbody rb;
-    public int Score;
+    private int Score;
+    private bool isGrounded;
 
     void Start()
     {
@@ -21,29 +25,35 @@ public class PlayerController : MonoBehaviour
         WinText.text = "";
     }
 
-    // Update is called once per frame
     void Update()
     {
-        float moveHorizontal = Input.GetAxis("Horizontal");
-        float moveVertival = Input.GetAxis("Vertical");
+        // Jump
+        if (Input.GetKeyDown(KeyCode.Space) && isGrounded)
+        {
+            rb.AddForce(Vector3.up * JumpForce, ForceMode.Impulse);
+            isGrounded = false;
+        }
 
-        Vector3 movement=new Vector3(moveHorizontal, 0.0f, moveVertival);
-
-        rb.AddForce(movement * Speed);
-
-        // Restart level 
-
+        // Restart level
         if (Input.GetKeyDown(KeyCode.R))
         {
-            SceneManager.LoadScene(SceneManager.GetActiveScene().name);    
+            SceneManager.LoadScene(SceneManager.GetActiveScene().name);
         }
 
-        // quit game
+        // Quit game
         if (Input.GetKeyDown(KeyCode.Escape))
         {
-           Application.Quit(); 
+            Application.Quit();
         }
+    }
 
+    void FixedUpdate()
+    {
+        float moveHorizontal = Input.GetAxis("Horizontal");
+        float moveVertical = Input.GetAxis("Vertical");
+
+        Vector3 movement = new Vector3(moveHorizontal, 0.0f, moveVertical);
+        rb.AddForce(movement * Speed);
     }
 
     void OnTriggerEnter(Collider other)
@@ -53,25 +63,34 @@ public class PlayerController : MonoBehaviour
             other.gameObject.SetActive(false);
             Score++;
             SetScoreText();
+
             if (Score >= 5)
             {
-                Gate.gameObject.SetActive(false);
+                Gate.SetActive(false);
             }
         }
+
         if (other.gameObject.CompareTag("danger"))
         {
             SceneManager.LoadScene(SceneManager.GetActiveScene().name);
         }
     }
 
+    void OnCollisionEnter(Collision collision)
+    {
+        if (collision.gameObject.CompareTag("Ground"))
+        {
+            isGrounded = true;
+        }
+    }
+
     void SetScoreText()
     {
-        ScoreText.text="Score: " + Score.ToString();
+        ScoreText.text = "Score: " + Score.ToString();
 
-        if(Score == 10)
+        if (Score >= 10)
         {
             WinText.text = "You win";
         }
     }
-    
 }
